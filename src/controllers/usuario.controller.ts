@@ -19,7 +19,7 @@ import {
   requestBody,
   response,
 } from '@loopback/rest';
-import {Credenciales, Login, Usuario} from '../models';
+import {Credenciales, FactorDeAutenticacionPorCodigo, Login, Usuario} from '../models';
 import {LoginRepository, UsuarioRepository} from '../repositories';
 import {SeguridadUsuarioService} from '../services';
 
@@ -170,7 +170,7 @@ export class UsuarioController {
   @post('/identificar-usuario')
   @response(200, {
     description: "Identificar un usuario por correo y clave",
-    content: {'application/json': {schema: getModelSchemaRef(Credenciales)}}
+    content: {'application/json': {schema: getModelSchemaRef(Usuario)}}
   })
   async identificarUsuario(
     @requestBody(
@@ -198,6 +198,37 @@ export class UsuarioController {
       return usuario;
     }
     return new HttpErrors[401]("Credenciales Incorrectas")
+  }
+
+  @post('/verificar-2fa')
+  @response(200, {
+    description: "validar un código de 2fa",
+    content: {'application/json': {schema: getModelSchemaRef(FactorDeAutenticacionPorCodigo)}}
+  })
+  async VerificarCodigo2fa(
+    @requestBody(
+      {
+        content: {
+          'application/json': {
+            schema: getModelSchemaRef(FactorDeAutenticacionPorCodigo)
+          }
+        }
+      }
+    )
+    credenciales: FactorDeAutenticacionPorCodigo
+  ): Promise<object> {
+    let usuario = await this.servicioSeguridad.validarCodigo2fa(credenciales);
+    if (usuario) {
+      let token = this.servicioSeguridad.crearToken(usuario);
+      if (usuario) {
+        usuario.clave = "";
+        return {
+          user: usuario,
+          token: token
+        };
+      }
+    }
+    return new HttpErrors[401]("Código de 2fa inválido para el usuario definido")
   }
 
 }
