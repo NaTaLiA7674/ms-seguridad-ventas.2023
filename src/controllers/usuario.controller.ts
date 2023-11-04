@@ -39,6 +39,10 @@ export class UsuarioController {
     private servicioAuth: AuthService
   ) { }
 
+  @authenticate({
+    strategy: "auth",
+    options: ["usuario", "guardar"]
+  })
   @post('/usuario')
   @response(200, {
     description: 'Usuario model instance',
@@ -67,6 +71,43 @@ export class UsuarioController {
     // Enviar un correo electrónico de notificación
     return this.usuarioRepository.create(usuario);
   }
+
+  @post('/usuario-publico')
+  @response(200, {
+    description: 'Usuario model instance',
+    content: {'application/json': {schema: getModelSchemaRef(Usuario)}},
+  })
+  async creacioPublica(
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(Usuario, {
+            title: 'NewUsuario',
+            exclude: ['_id'],
+          }),
+        },
+      },
+    })
+    usuario: Omit<Usuario, '_id'>,
+  ): Promise<Usuario> {
+    // crear la clave
+    let clave = this.servicioSeguridad.crearTextoAleatorio(10);
+    console.log(clave);
+    // cifrar la clave
+    let claveCifrada = this.servicioSeguridad.cifrarTexto(clave);
+    // asignar la clave cifrada al usuario
+    usuario.clave = claveCifrada;
+    //hash de validación del correo
+    let hash = this.servicioSeguridad.crearTextoAleatorio(100);
+    usuario.hashValidacion = hash;
+    usuario.estadoValidacion = false;
+    usuario.aceptado = false;
+    // Enviar un correo electrónico de notificación
+    return this.usuarioRepository.create(usuario);
+
+    //Notificación del hash de validación
+  }
+
 
   @get('/usuario/count')
   @response(200, {
