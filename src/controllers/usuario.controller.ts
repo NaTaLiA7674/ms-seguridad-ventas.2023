@@ -103,6 +103,8 @@ export class UsuarioController {
     usuario.hashValidacion = hash;
     usuario.estadoValidacion = false;
     usuario.aceptado = false;
+    usuario.rolId = ConfiguracionSeguridad.rolUsuarioPublico;
+
     // Enviar un correo electrónico de notificación
     return this.usuarioRepository.create(usuario);
 
@@ -323,6 +325,7 @@ export class UsuarioController {
     let usuario = await this.servicioSeguridad.validarCodigo2fa(credenciales);
     if (usuario) {
       let token = this.servicioSeguridad.crearToken(usuario);
+      let menu = [];
       if (usuario) {
         usuario.clave = "";
         try {
@@ -337,9 +340,11 @@ export class UsuarioController {
         } catch {
           console.log("No se ha almacenado el cambio del estado de token en la base de datos.")
         }
+        menu = await this.servicioSeguridad.ConsultarPermisosDeMenuPorUsuario(usuario.rolId);
         return {
           user: usuario,
-          token: token
+          token: token,
+          menu: menu
         };
       }
     }

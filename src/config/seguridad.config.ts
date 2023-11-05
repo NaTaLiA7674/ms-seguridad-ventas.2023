@@ -6,4 +6,5 @@ export namespace ConfiguracionSeguridad {
   export const editarAccion = "editar";
   export const eliminarAccion = "eliminar";
   export const descargarAccion = "descargar";
+  export const rolUsuarioPublico = "65480a907578136a1885b004";
 }
