@@ -22,7 +22,7 @@ import {
 } from '@loopback/rest';
 import {UserProfile} from '@loopback/security';
 import {ConfiguracionSeguridad} from '../config/seguridad.config';
-import {Credenciales, FactorDeAutenticacionPorCodigo, Login, PermisosRolMenu, Usuario} from '../models';
+import {Credenciales, FactorDeAutenticacionPorCodigo, HashValidacionUsuario, Login, PermisosRolMenu, Usuario} from '../models';
 import {LoginRepository, UsuarioRepository} from '../repositories';
 import {SeguridadUsuarioService} from '../services';
 import {AuthService} from '../services/auth.service';
@@ -106,8 +106,36 @@ export class UsuarioController {
     return this.usuarioRepository.create(usuario);
 
     //Notificación del hash de validación
+    //Envío de clave
   }
 
+  @post('/validar-hash-usuario')
+  @response(200, {
+    description: 'validar hash',
+  })
+  async validarHashUsuario(
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(HashValidacionUsuario, {}),
+        },
+      },
+    })
+    hash: HashValidacionUsuario,
+  ): Promise<boolean> {
+    let usuario = await this.usuarioRepository.findOne({
+      where: {
+        hashValidacion: hash.codigoHash,
+        estadoValidacion: false
+      }
+    });
+    if (usuario) {
+      usuario.estadoValidacion = true;
+      this.usuarioRepository.replaceById(usuario._id, usuario);
+      return true;
+    }
+    return false;
+  }
 
   @get('/usuario/count')
   @response(200, {
