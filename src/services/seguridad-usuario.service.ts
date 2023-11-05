@@ -47,7 +47,8 @@ export class SeguridadUsuarioService {
     let usuario = await this.repositorioUsuario.findOne({
       where: {
         correo: credenciales.correo,
-        clave: credenciales.clave
+        clave: credenciales.clave,
+        estadoValidacion: true
       }
     });
     return usuario as Usuario;
